@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="card-title">{{ profile_user.username }}의 프로필</h3>
+                    <p class="card-text">
+                        <strong>가입일:</strong> {{ profile_user.date_joined|date:"Y년 m월 d일" }}<br>
+                        <strong>게시글:</strong> {{ total_posts }}개
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="card-title">게시글 목록</h3>
+                    {% if posts %}
+                    <div class="list-group">
+                        {% for post in posts %}
+                        <a href="{% url 'post_detail' post.slug %}" class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h5 class="mb-1">{{ post.title }}</h5>
+                                <small>{{ post.created_at|date:"Y-m-d" }}</small>
+                            </div>
+                            <p class="mb-1">{{ post.content|truncatewords:30 }}</p>
+                            {% if post.categories.all %}
+                            <small>
+                                카테고리:
+                                {% for category in post.categories.all %}
+                                <span class="badge bg-secondary">{{ category.name }}</span>
+                                {% endfor %}
+                            </small>
+                            {% endif %}
+                        </a>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p>발행된 게시글이 없습니다.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

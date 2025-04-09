@@ -1,115 +1,191 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}{{ post.title }} - 블로그{% endblock %}
 
 {% block content %}
-<div class="container">
-    <article class="post-detail">
-        <header class="post-header">
-            <h1>{{ post.title }}</h1>
-            <div class="post-meta">
-                <span>작성자: <a href="{% url 'blog_detail' username=post.author.username %}">{{ post.author.username }}</a></span>
-                <span>작성일: {{ post.created_at|date:"Y-m-d H:i" }}</span>
-                <span>조회수: {{ post.view_count }}</span>
-                {% if post.categories.all %}
-                <div class="post-categories">
-                    카테고리:
-                    {% for category in post.categories.all %}
-                        <a href="#" class="category">{{ category.name }}</a>
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <article class="blog-post">
+                <h1 class="blog-post-title">{{ post.title }}</h1>
+                <p class="blog-post-meta">
+                    {{ post.created_at|date:"Y년 m월 d일" }} by 
+                    <a href="{% url 'blog_detail' post.author.username %}">{{ post.author.username }}</a>
+                </p>
+                
+                <!-- 좋아요 버튼 추가 -->
+                <div class="d-flex align-items-center mb-3">
+                    <button id="likeButton" class="btn btn-outline-primary me-2" data-post-slug="{{ post.slug }}">
+                        <i class="fas fa-heart {% if user in post.likes.all %}text-danger{% endif %}"></i>
+                        좋아요
+                    </button>
+                    <span id="likeCount" class="me-3">{{ post.like_count }}</span>
+                    
+                    <button id="bookmarkButton" class="btn btn-outline-primary me-2" data-post-slug="{{ post.slug }}">
+                        <i class="fas fa-bookmark {% if user in post.bookmarks.all %}text-warning{% endif %}"></i>
+                        북마크
+                    </button>
+                    <span id="bookmarkCount">{{ post.bookmark_count }}</span>
+                </div>
+                
+                <div class="blog-post-content">
+                    {{ post.content|linebreaks }}
+                </div>
+                
+                <!-- 태그 표시 -->
+                {% if post.tags.all %}
+                <div class="blog-post-tags mt-3">
+                    <h5>태그:</h5>
+                    {% for tag in post.tags.all %}
+                    <a href="{% url 'home' %}?q={{ tag.name }}" class="badge bg-secondary text-decoration-none me-1">
+                        #{{ tag.name }}
+                    </a>
                     {% endfor %}
                 </div>
                 {% endif %}
-            </div>
-            {% if user == post.author %}
-            <div class="post-actions">
-                <a href="{% url 'post_update' slug=post.slug %}" class="btn-secondary">수정</a>
-                <a href="{% url 'post_delete' slug=post.slug %}" class="btn-danger">삭제</a>
-            </div>
-            {% endif %}
-        </header>
-        
-        <div class="post-content">
-            {{ post.content|linebreaks }}
-        </div>
-        
-        <div class="post-footer">
-            <h3>댓글 ({{ comments|length }})</h3>
-            <div class="comments">
-                {% for comment in comments %}
-                <div class="comment">
-                    <div class="comment-meta">
-                        <strong>{{ comment.author.username }}</strong>
-                        <span>{{ comment.created_at|date:"Y-m-d H:i" }}</span>
-                    </div>
-                    <div class="comment-content">
-                        {{ comment.content|linebreaks }}
-                    </div>
-                    <div class="comment-reply">
-                        <button class="reply-button">답글</button>
-                        <div class="reply-form" style="display: none;">
-                            <form method="post" action="{% url 'post_comment' slug=post.slug %}">
-                                {% csrf_token %}
-                                <input type="hidden" name="parent_id" value="{{ comment.id }}">
-                                <textarea name="content" rows="2" required></textarea>
-                                <button type="submit" class="btn-primary">답글 작성</button>
-                            </form>
-                        </div>
-                    </div>
-                    
-                    {% if comment.replies.all %}
-                    <div class="replies">
-                        {% for reply in comment.replies.all %}
-                        <div class="reply">
-                            <div class="comment-meta">
-                                <strong>{{ reply.author.username }}</strong>
-                                <span>{{ reply.created_at|date:"Y-m-d H:i" }}</span>
-                            </div>
-                            <div class="comment-content">
-                                {{ reply.content|linebreaks }}
-                            </div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                    {% endif %}
-                </div>
-                {% empty %}
-                <p>첫 번째 댓글을 작성해보세요!</p>
-                {% endfor %}
-            </div>
+            </article>
             
-            {% if user.is_authenticated %}
-            <div class="comment-form">
-                <h4>댓글 작성</h4>
-                <form method="post" action="{% url 'post_comment' slug=post.slug %}">
-                    {% csrf_token %}
-                    {{ comment_form.content }}
-                    <button type="submit" class="btn-primary">댓글 작성</button>
-                </form>
+            <div class="post-footer">
+                <h3>댓글 ({{ comments|length }})</h3>
+                <div class="comments">
+                    {% for comment in comments %}
+                    <div class="comment">
+                        <div class="comment-meta">
+                            <strong>{{ comment.author.username }}</strong>
+                            <span>{{ comment.created_at|date:"Y-m-d H:i" }}</span>
+                        </div>
+                        <div class="comment-content">
+                            {{ comment.content|linebreaks }}
+                        </div>
+                        <div class="comment-reply">
+                            <button class="reply-button">답글</button>
+                            <div class="reply-form" style="display: none;">
+                                <form method="post" action="{% url 'post_comment' slug=post.slug %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="parent_id" value="{{ comment.id }}">
+                                    <textarea name="content" rows="2" required></textarea>
+                                    <button type="submit" class="btn-primary">답글 작성</button>
+                                </form>
+                            </div>
+                        </div>
+                        
+                        {% if comment.replies.all %}
+                        <div class="replies">
+                            {% for reply in comment.replies.all %}
+                            <div class="reply">
+                                <div class="comment-meta">
+                                    <strong>{{ reply.author.username }}</strong>
+                                    <span>{{ reply.created_at|date:"Y-m-d H:i" }}</span>
+                                </div>
+                                <div class="comment-content">
+                                    {{ reply.content|linebreaks }}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% empty %}
+                    <p>첫 번째 댓글을 작성해보세요!</p>
+                    {% endfor %}
+                </div>
+                
+                {% if user.is_authenticated %}
+                <div class="comment-form">
+                    <h4>댓글 작성</h4>
+                    <form method="post" action="{% url 'post_comment' slug=post.slug %}">
+                        {% csrf_token %}
+                        {{ comment_form.content }}
+                        <button type="submit" class="btn-primary">댓글 작성</button>
+                    </form>
+                </div>
+                {% else %}
+                <div class="login-prompt">
+                    <p>댓글을 작성하려면 <a href="{% url 'login' %}">로그인</a>이 필요합니다.</p>
+                </div>
+                {% endif %}
             </div>
-            {% else %}
-            <div class="login-prompt">
-                <p>댓글을 작성하려면 <a href="{% url 'login' %}">로그인</a>이 필요합니다.</p>
-            </div>
-            {% endif %}
         </div>
-    </article>
+    </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const replyButtons = document.querySelectorAll('.reply-button');
-        replyButtons.forEach(button => {
-            button.addEventListener('click', function() {
-                const replyForm = this.nextElementSibling;
-                if (replyForm.style.display === 'none') {
-                    replyForm.style.display = 'block';
-                } else {
-                    replyForm.style.display = 'none';
-                }
-            });
+// 좋아요 버튼 이벤트
+document.getElementById('likeButton').addEventListener('click', function(e) {
+    e.preventDefault();
+    const postSlug = this.dataset.postSlug;
+    
+    fetch(`/post/${postSlug}/like/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        const heartIcon = this.querySelector('i');
+        if (data.liked) {
+            heartIcon.classList.add('text-danger');
+        } else {
+            heartIcon.classList.remove('text-danger');
+        }
+        document.getElementById('likeCount').textContent = data.like_count;
+    });
+});
+
+// 북마크 버튼 이벤트
+document.getElementById('bookmarkButton').addEventListener('click', function(e) {
+    e.preventDefault();
+    const postSlug = this.dataset.postSlug;
+    
+    fetch(`/post/${postSlug}/bookmark/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        const bookmarkIcon = this.querySelector('i');
+        if (data.bookmarked) {
+            bookmarkIcon.classList.add('text-warning');
+        } else {
+            bookmarkIcon.classList.remove('text-warning');
+        }
+        document.getElementById('bookmarkCount').textContent = data.bookmark_count;
+    });
+});
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const replyButtons = document.querySelectorAll('.reply-button');
+    replyButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const replyForm = this.nextElementSibling;
+            if (replyForm.style.display === 'none') {
+                replyForm.style.display = 'block';
+            } else {
+                replyForm.style.display = 'none';
+            }
         });
     });
+});
 </script>
 {% endblock %}

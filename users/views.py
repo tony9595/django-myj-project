@@ -1,7 +1,10 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login
 from django.contrib import messages
-from .forms import UserRegisterForm, UserLoginForm
+from .forms import UserRegisterForm, UserLoginForm, CustomUserCreationForm, CustomUserChangeForm
+from .models import User
+from blog.models import Post
+from django.contrib.auth.decorators import login_required
 
 def login_view(request):
     if request.method == 'POST':
@@ -26,12 +29,50 @@ def login_view(request):
 
 def register(request):
     if request.method == 'POST':
-        form = UserRegisterForm(request.POST)
+        form = CustomUserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            messages.success(request, '회원가입이 완료되었습니다.')
+            return redirect('home')
+    else:
+        form = CustomUserCreationForm()
+    return render(request, 'users/register.html', {'form': form})
+
+@login_required
+def profile(request):
+    if request.method == 'POST':
+        form = CustomUserChangeForm(request.POST, request.FILES, instance=request.user)
         if form.is_valid():
             form.save()
-            username = form.cleaned_data.get('username')
-            messages.success(request, f'계정이 생성되었습니다! 로그인할 수 있습니다.')
-            return redirect('login')
+            messages.success(request, '프로필이 업데이트되었습니다.')
+            return redirect('profile')
     else:
-        form = UserRegisterForm()
-    return render(request, 'users/register.html', {'form': form})
+        form = CustomUserChangeForm(instance=request.user)
+    
+    # 사용자의 게시글 통계
+    posts = Post.objects.filter(author=request.user)
+    published_posts = posts.filter(status='published')
+    draft_posts = posts.filter(status='draft')
+    
+    context = {
+        'form': form,
+        'total_posts': posts.count(),
+        'published_posts': published_posts.count(),
+        'draft_posts': draft_posts.count(),
+        'recent_posts': published_posts.order_by('-created_at')[:5]
+    }
+    
+    return render(request, 'users/profile.html', context)
+
+def user_profile(request, username):
+    user = get_object_or_404(User, username=username)
+    posts = Post.objects.filter(author=user, status='published').order_by('-created_at')
+    
+    context = {
+        'profile_user': user,
+        'posts': posts,
+        'total_posts': posts.count(),
+    }
+    
+    return render(request, 'users/user_profile.html', context)

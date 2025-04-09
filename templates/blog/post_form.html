@@ -18,52 +18,68 @@
 {% endblock %}
 
 {% block content %}
-<div class="container">
-    <div class="form-container">
-        <h1>{% if object %}게시글 수정{% else %}새 게시글 작성{% endif %}</h1>
-        
-        <form method="post">
-            {% csrf_token %}
-            
-            <div class="form-section">
-                <label for="id_title">제목</label>
-                {{ form.title }}
-                {% if form.title.errors %}
-                <span class="error">{{ form.title.errors }}</span>
-                {% endif %}
-            </div>
-            
-            <div class="form-section">
-                <label for="id_content">내용</label>
-                {{ form.content }}
-                {% if form.content.errors %}
-                <span class="error">{{ form.content.errors }}</span>
-                {% endif %}
-            </div>
-            
-            <div class="form-section">
-                <label>카테고리</label>
-                <div class="category-list">
-                    {{ form.categories }}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <h2>{% if form.instance.pk %}게시글 수정{% else %}새 게시글 작성{% endif %}</h2>
+            <form method="post" class="mt-4">
+                {% csrf_token %}
+                
+                <div class="mb-3">
+                    <label for="{{ form.title.id_for_label }}" class="form-label">제목</label>
+                    {{ form.title }}
+                    {% if form.title.errors %}
+                    <div class="alert alert-danger">
+                        {{ form.title.errors }}
+                    </div>
+                    {% endif %}
                 </div>
-                {% if form.categories.errors %}
-                <span class="error">{{ form.categories.errors }}</span>
-                {% endif %}
-            </div>
-            
-            <div class="form-section">
-                <label for="id_status">상태</label>
-                {{ form.status }}
-                {% if form.status.errors %}
-                <span class="error">{{ form.status.errors }}</span>
-                {% endif %}
-            </div>
-            
-            <div class="form-buttons">
-                <button type="submit" class="btn-primary">저장</button>
-                <a href="javascript:history.back()" class="btn-secondary">취소</a>
-            </div>
-        </form>
+                
+                <div class="mb-3">
+                    <label for="{{ form.content.id_for_label }}" class="form-label">내용</label>
+                    {{ form.content }}
+                    {% if form.content.errors %}
+                    <div class="alert alert-danger">
+                        {{ form.content.errors }}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="mb-3">
+                    <label for="{{ form.categories.id_for_label }}" class="form-label">카테고리</label>
+                    {{ form.categories }}
+                    {% if form.categories.errors %}
+                    <div class="alert alert-danger">
+                        {{ form.categories.errors }}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="mb-3">
+                    <label for="{{ form.tags.id_for_label }}" class="form-label">태그</label>
+                    {{ form.tags }}
+                    <small class="form-text text-muted">{{ form.tags.help_text }}</small>
+                    {% if form.tags.errors %}
+                    <div class="alert alert-danger">
+                        {{ form.tags.errors }}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="mb-3">
+                    <label for="{{ form.status.id_for_label }}" class="form-label">상태</label>
+                    {{ form.status }}
+                    {% if form.status.errors %}
+                    <div class="alert alert-danger">
+                        {{ form.status.errors }}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <button type="submit" class="btn btn-primary">저장</button>
+                <a href="{% url 'home' %}" class="btn btn-secondary">취소</a>
+            </form>
+        </div>
     </div>
 </div>
 {% endblock %}

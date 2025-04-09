@@ -1,9 +1,20 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}홈 - 블로그 플랫폼{% endblock %}
 
 {% block content %}
-<div class="container">
+<div class="container mt-4">
+    <!-- 검색 폼 추가 -->
+    <div class="row mb-4">
+        <div class="col-md-6 mx-auto">
+            <form method="get" class="d-flex">
+                <input type="text" name="q" class="form-control me-2" placeholder="검색어를 입력하세요" value="{{ search_query }}">
+                <button type="submit" class="btn btn-primary">검색</button>
+            </form>
+        </div>
+    </div>
+    
     <div class="home-header">
         <h1>최신 게시글</h1>
     </div>

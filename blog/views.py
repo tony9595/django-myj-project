@@ -7,6 +7,7 @@ from django.db.models import Count, Q
 from .models import Post, Category, Comment
 from .forms import PostForm, CommentForm, CategoryForm
 from users.models import User
+from django.http import JsonResponse
 
 class HomeView(ListView):
     model = Post
@@ -15,7 +16,23 @@ class HomeView(ListView):
     paginate_by = 16  # 4x4 그리드
     
     def get_queryset(self):
-        return Post.objects.filter(status='published').order_by('-created_at')
+        queryset = Post.objects.filter(status='published')
+        search_query = self.request.GET.get('q')
+        
+        if search_query:
+            queryset = queryset.filter(
+                Q(title__icontains=search_query) |
+                Q(content__icontains=search_query) |
+                Q(author__username__icontains=search_query) |
+                Q(categories__name__icontains=search_query)
+            ).distinct()
+        
+        return queryset.order_by('-created_at')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['search_query'] = self.request.GET.get('q', '')
+        return context
 
 class BlogDetailView(ListView):
     model = Post
@@ -131,3 +148,44 @@ class CategoryDeleteView(LoginRequiredMixin, DeleteView):
     model = Category
     success_url = reverse_lazy('category_management')
     template_name = 'blog/category_confirm_delete.html'
+
+@login_required
+def post_like(request, slug):
+    post = get_object_or_404(Post, slug=slug)
+    
+    if request.user in post.likes.all():
+        post.likes.remove(request.user)
+        liked = False
+    else:
+        post.likes.add(request.user)
+        liked = True
+    
+    return JsonResponse({
+        'liked': liked,
+        'like_count': post.like_count()
+    })
+
+@login_required
+def post_bookmark(request, slug):
+    post = get_object_or_404(Post, slug=slug)
+    
+    if request.user in post.bookmarks.all():
+        post.bookmarks.remove(request.user)
+        bookmarked = False
+    else:
+        post.bookmarks.add(request.user)
+        bookmarked = True
+    
+    return JsonResponse({
+        'bookmarked': bookmarked,
+        'bookmark_count': post.bookmark_count()
+    })
+
+@login_required
+def bookmarked_posts(request):
+    posts = Post.objects.filter(
+        bookmarks=request.user,
+        status='published'
+    ).order_by('-created_at')
+    
+    return render(request, 'blog/bookmarked_posts.html', {'posts': posts})
