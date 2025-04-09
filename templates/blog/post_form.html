@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    {% if object %}게시글 수정{% else %}새 게시글 작성{% endif %}
+{% endblock %}
+
+{% block extra_head %}
+<style>
+    .form-section {
+        margin-bottom: 20px;
+    }
+    .category-list {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="form-container">
+        <h1>{% if object %}게시글 수정{% else %}새 게시글 작성{% endif %}</h1>
+        
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="form-section">
+                <label for="id_title">제목</label>
+                {{ form.title }}
+                {% if form.title.errors %}
+                <span class="error">{{ form.title.errors }}</span>
+                {% endif %}
+            </div>
+            
+            <div class="form-section">
+                <label for="id_content">내용</label>
+                {{ form.content }}
+                {% if form.content.errors %}
+                <span class="error">{{ form.content.errors }}</span>
+                {% endif %}
+            </div>
+            
+            <div class="form-section">
+                <label>카테고리</label>
+                <div class="category-list">
+                    {{ form.categories }}
+                </div>
+                {% if form.categories.errors %}
+                <span class="error">{{ form.categories.errors }}</span>
+                {% endif %}
+            </div>
+            
+            <div class="form-section">
+                <label for="id_status">상태</label>
+                {{ form.status }}
+                {% if form.status.errors %}
+                <span class="error">{{ form.status.errors }}</span>
+                {% endif %}
+            </div>
+            
+            <div class="form-buttons">
+                <button type="submit" class="btn-primary">저장</button>
+                <a href="javascript:history.back()" class="btn-secondary">취소</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

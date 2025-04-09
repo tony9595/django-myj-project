@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% block title %}{{ blog_owner.username }}의 블로그{% endblock %}
+{% block content %}
+    <div class="container">
+        <div class="blog-header">
+            <h1>{{ blog_owner.username }}의 블로그</h1>
+            {% if user == blog_owner %}
+                <div class="blog-actions">
+                    <a href="{% url 'post_create' %}" class="btn-primary">새 글 작성</a>
+                    <a href="{% url 'category_management' %}" class="btn-secondary">카테고리 관리</a>
+                </div>
+            {% endif %}
+        </div>
+        <div class="admin-container">
+            <div class="sidebar">
+                <div class="widget">
+                    <h3>카테고리</h3>
+                    <ul>
+                        <li>
+                            <a href="{% url 'blog_detail' username=blog_owner.username %}">전체 글</a>
+                        </li>
+                        {% for category in categories %}
+                            <li>
+                                <a href="{% url 'blog_detail' username=blog_owner.username %}?category={{ category.slug }}">{{ category.name }}</a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            <div class="content-area">
+                <div class="post-list">
+                    {% for post in posts %}
+                        <div class="post-item">
+                            <h2>
+                                <a href="{% url 'post_detail' slug=post.slug %}">{{ post.title }}</a>
+                            </h2>
+                            <div class="post-meta">
+                                <span>{{ post.created_at|date:"Y-m-d" }}</span>
+                                <span>조회 {{ post.view_count }}</span>
+                            </div>
+                            <p class="post-excerpt">{{ post.content|truncatechars:200 }}</p>
+                            <div class="post-categories">
+                                {% for category in post.categories.all %}<span class="category">{{ category.name }}</span>{% endfor %}
+                            </div>
+                        </div>
+                    {% empty %}
+                        <div class="no-posts">
+                            <p>작성된 게시글이 없습니다.</p>
+                            {% if user == blog_owner %}
+                                <p>
+                                    <a href="{% url 'post_create' %}" class="btn-primary">새 글 작성하기</a>
+                                </p>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+                {% if is_paginated %}
+                    <div class="pagination">
+                        {% if page_obj.has_previous %}
+                            <a href="?page=1">&laquo; 처음</a>
+                            <a href="?page={{ page_obj.previous_page_number }}">&lsaquo; 이전</a>
+                        {% endif %}
+                        {% for num in page_obj.paginator.page_range %}
+                            {% if page_obj.number == num %}
+                                <span class="current">{{ num }}</span>
+                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                <a href="?page={{ num }}">{{ num }}</a>
+                            {% endif %}
+                        {% endfor %}
+                        {% if page_obj.has_next %}
+                            <a href="?page={{ page_obj.next_page_number }}">다음 &rsaquo;</a>
+                            <a href="?page={{ page_obj.paginator.num_pages }}">마지막 &raquo;</a>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock %}

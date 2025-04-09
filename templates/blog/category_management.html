@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+
+{% block title %}카테고리 관리{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="admin-container">
+        <div class="sidebar">
+            <h3>블로그 관리</h3>
+            <ul>
+                <li><a href="#">대시보드</a></li>
+                <li><a href="#">글 관리</a></li>
+                <li><a href="{% url 'category_management' %}" class="active">카테고리 관리</a></li>
+                <li><a href="#">댓글 관리</a></li>
+                <li><a href="#">설정</a></li>
+            </ul>
+        </div>
+        
+        <div class="content-area">
+            <div class="content-header">
+                <h2>카테고리 관리</h2>
+                <a href="{% url 'category_create' %}" class="btn-primary">+ 새 카테고리</a>
+            </div>
+            
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>카테고리명</th>
+                            <th>게시글 수</th>
+                            <th>관리</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if categories %}
+                        {% for category in categories %}
+                        <tr>
+                            <td>{{ category.name }}</td>
+                            <td>{{ category.post_count }}</td>
+                            <td class="action-buttons">
+                                <a href="{% url 'category_update' pk=category.id %}" class="btn-secondary">수정</a>
+                                <a href="{% url 'category_delete' pk=category.id %}" class="btn-danger">삭제</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        
+                        {% else %}
+                        <tr>
+                            <td colspan="3">등록된 카테고리가 없습니다.</td>
+                        </tr>
+                        {% endif %}
+
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

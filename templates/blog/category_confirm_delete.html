@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block title %}카테고리 삭제{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="admin-container">
+        <div class="sidebar">
+            <h3>블로그 관리</h3>
+            <ul>
+                <li><a href="#">대시보드</a></li>
+                <li><a href="#">글 관리</a></li>
+                <li><a href="{% url 'category_management' %}" class="active">카테고리 관리</a></li>
+                <li><a href="#">댓글 관리</a></li>
+                <li><a href="#">설정</a></li>
+            </ul>
+        </div>
+        
+        <div class="content-area">
+            <div class="content-header">
+                <h2>카테고리 삭제</h2>
+            </div>
+            
+            <div class="delete-confirmation">
+                <p>카테고리 <strong>"{{ object.name }}"</strong>을(를) 삭제하시겠습니까?</p>
+                <p>이 카테고리에 속한 모든 게시글은 카테고리 없음 상태가 됩니다.</p>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="form-buttons">
+                        <button type="submit" class="btn-danger">삭제</button>
+                        <a href="{% url 'category_management' %}" class="btn-secondary">취소</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

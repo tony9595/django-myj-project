@@ -1,0 +1,36 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}블로그{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <header>
+        <nav>
+            <div class="logo">블로그</div>
+            <ul>
+                <li><a href="{% url 'home' %}">홈</a></li>
+                <li><a href="#">검색</a></li>
+                {% if user.is_authenticated %}
+                    <li><a href="{% url 'blog_detail' username=user.username %}">내 블로그</a></li>
+                    <li><a href="{% url 'logout' %}">로그아웃</a></li>
+                {% else %}
+                    <li><a href="{% url 'login' %}">로그인</a></li>
+                    <li><a href="{% url 'register' %}">가입</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <script src="{% static 'js/main.js' %}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
