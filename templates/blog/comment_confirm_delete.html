@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}카테고리 삭제{% endblock %}
+{% block title %}댓글 삭제{% endblock %}
 
 {% block content %}
 <div class="container">
@@ -10,30 +10,35 @@
             <ul>
                 <li><a href="#">대시보드</a></li>
                 <li><a href="{% url 'post_list' %}">글 관리</a></li>
-                <li><a href="{% url 'category_list' %}" class="active">카테고리 관리</a></li>
-                <li><a href="{% url 'comment_list' %}">댓글 관리</a></li>
+                <li><a href="{% url 'category_list' %}">카테고리 관리</a></li>
+                <li><a href="{% url 'comment_list' %}" class="active">댓글 관리</a></li>
                 <li><a href="#">설정</a></li>
             </ul>
         </div>
         
         <div class="content-area">
             <div class="content-header">
-                <h2>카테고리 삭제</h2>
+                <h2>댓글 삭제</h2>
             </div>
             
             <div class="delete-confirmation">
-                <p>카테고리 <strong>"{{ object.name }}"</strong>을(를) 삭제하시겠습니까?</p>
-                <p>이 카테고리에 속한 모든 게시글은 카테고리 없음 상태가 됩니다.</p>
+                <p>다음 댓글을 삭제하시겠습니까?</p>
+                <div class="comment-preview">
+                    <p><strong>게시물:</strong> {{ object.post.title }}</p>
+                    <p><strong>작성자:</strong> {{ object.author.username }}</p>
+                    <p><strong>내용:</strong> {{ object.content }}</p>
+                </div>
+                <p>이 작업은 되돌릴 수 없습니다.</p>
                 
                 <form method="post">
                     {% csrf_token %}
                     <div class="form-buttons">
                         <button type="submit" class="btn-danger">삭제</button>
-                        <a href="{% url 'category_list' %}" class="btn-secondary">취소</a>
+                        <a href="{% url 'comment_list' %}" class="btn-secondary">취소</a>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 </div>
-{% endblock %}
+{% endblock %} 

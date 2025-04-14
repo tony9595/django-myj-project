@@ -14,10 +14,14 @@
             <div class="logo">블로그</div>
             <ul>
                 <li><a href="{% url 'home' %}">홈</a></li>
-                <li><a href="#">검색</a></li>
                 {% if user.is_authenticated %}
                     <li><a href="{% url 'blog_detail' username=user.username %}">내 블로그</a></li>
-                    <li><a href="{% url 'logout' %}">로그아웃</a></li>
+                    <li>
+                        <form action="{% url 'logout' %}" method="post" style="display:inline;">
+                            {% csrf_token %}
+                            <button type="submit" style="background:none; border:none; padding:0; color:inherit; text-decoration:underline; cursor:pointer;">로그아웃</button>
+                        </form>
+                    </li>
                 {% else %}
                     <li><a href="{% url 'login' %}">로그인</a></li>
                     <li><a href="{% url 'register' %}">가입</a></li>

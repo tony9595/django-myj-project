@@ -7,7 +7,7 @@
             {% if user == blog_owner %}
                 <div class="blog-actions">
                     <a href="{% url 'post_create' %}" class="btn-primary">새 글 작성</a>
-                    <a href="{% url 'category_management' %}" class="btn-secondary">카테고리 관리</a>
+                    <a href="{% url 'category_list' %}" class="btn-secondary">카테고리 관리</a>
                 </div>
             {% endif %}
         </div>

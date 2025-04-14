@@ -1,13 +1,15 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
-from django.urls import reverse_lazy
+from django.urls import reverse_lazy, reverse
 from django.db.models import Count, Q
 from .models import Post, Category, Comment
 from .forms import PostForm, CommentForm, CategoryForm
 from users.models import User
 from django.http import JsonResponse
+from django.utils.text import slugify
+from unidecode import unidecode
 
 class HomeView(ListView):
     model = Post
@@ -16,7 +18,7 @@ class HomeView(ListView):
     paginate_by = 16  # 4x4 그리드
     
     def get_queryset(self):
-        queryset = Post.objects.filter(status='published')
+        queryset = Post.objects.filter(status='published').exclude(slug='')
         search_query = self.request.GET.get('q')
         
         if search_query:
@@ -39,19 +41,21 @@ class BlogDetailView(ListView):
     template_name = 'blog/blog_detail.html'
     context_object_name = 'posts'
     paginate_by = 10
-    
+
     def get_queryset(self):
-        self.blog_owner = get_object_or_404(User, username=self.kwargs['username'])
+        username = self.kwargs.get('username')
+        user = get_object_or_404(User, username=username)
         return Post.objects.filter(
-            author=self.blog_owner, 
+            author=user,
             status='published'
-        ).order_by('-created_at')
-    
+        ).exclude(slug='').order_by('-created_at')
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['blog_owner'] = self.blog_owner
+        username = self.kwargs.get('username')
+        context['blog_owner'] = get_object_or_404(User, username=username)
         context['categories'] = Category.objects.filter(
-            posts__author=self.blog_owner
+            posts__author=context['blog_owner']
         ).distinct()
         return context
 
@@ -80,25 +84,35 @@ class PostCreateView(LoginRequiredMixin, CreateView):
     def form_valid(self, form):
         form.instance.author = self.request.user
         response = super().form_valid(form)
-        form.instance.categories.set(form.cleaned_data['categories'])
+        
+        # 카테고리 처리
+        categories = self.request.POST.getlist('categories')
+        for category_id in categories:
+            category = get_object_or_404(Category, id=category_id)
+            form.instance.categories.add(category)
+            
         return response
+    
+    def get_success_url(self):
+        return reverse('post_detail', kwargs={'slug': self.object.slug})
 
-class PostUpdateView(LoginRequiredMixin, UpdateView):
+class PostUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Post
     form_class = PostForm
     template_name = 'blog/post_form.html'
-    
-    def get_queryset(self):
-        # 자신의 글만 수정 가능
-        return Post.objects.filter(author=self.request.user)
+    success_url = reverse_lazy('post_list')
 
-class PostDeleteView(LoginRequiredMixin, DeleteView):
+    def test_func(self):
+        post = self.get_object()
+        return self.request.user == post.author
+
+class PostDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = Post
-    success_url = reverse_lazy('home')
-    
-    def get_queryset(self):
-        # 자신의 글만 삭제 가능
-        return Post.objects.filter(author=self.request.user)
+    success_url = reverse_lazy('post_list')
+
+    def test_func(self):
+        post = self.get_object()
+        return self.request.user == post.author
 
 @login_required
 def post_comment(request, slug):
@@ -121,33 +135,48 @@ def post_comment(request, slug):
     
     return redirect('post_detail', slug=post.slug)
 
-# 카테고리 관리 뷰
-@login_required
-def category_management(request):
-    categories = Category.objects.filter(
-        posts__author=request.user
-    ).annotate(
-        post_count=Count('posts')
-    ).distinct()
-    
-    return render(request, 'blog/category_management.html', {'categories': categories})
+class CategoryListView(LoginRequiredMixin, ListView):
+    model = Category
+    template_name = 'blog/category_management.html'
+    context_object_name = 'categories'
+
+    def get_queryset(self):
+        # 사용자가 작성한 게시물에 연결된 카테고리만 가져옴
+        return Category.objects.filter(
+            posts__author=self.request.user
+        ).annotate(
+            post_count=Count('posts')
+        ).distinct()
 
 class CategoryCreateView(LoginRequiredMixin, CreateView):
     model = Category
     form_class = CategoryForm
     template_name = 'blog/category_form.html'
-    success_url = reverse_lazy('category_management')
+    success_url = reverse_lazy('category_list')
 
-class CategoryUpdateView(LoginRequiredMixin, UpdateView):
+    def form_valid(self, form):
+        form.instance.author = self.request.user
+        return super().form_valid(form)
+
+class CategoryUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Category
     form_class = CategoryForm
     template_name = 'blog/category_form.html'
-    success_url = reverse_lazy('category_management')
+    success_url = reverse_lazy('category_list')
 
-class CategoryDeleteView(LoginRequiredMixin, DeleteView):
+    def test_func(self):
+        category = self.get_object()
+        # 카테고리의 글 중에 자신이 작성한 글이 있는지 확인
+        return category.posts.filter(author=self.request.user).exists() or (category.author == self.request.user)
+
+class CategoryDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = Category
-    success_url = reverse_lazy('category_management')
-    template_name = 'blog/category_confirm_delete.html'
+    success_url = reverse_lazy('category_list')
+
+    def test_func(self):
+        category = self.get_object()
+        # 카테고리의 글 중에 자신이 작성한 글이 있는지 확인
+        return category.posts.filter(author=self.request.user).exists() or (category.author == self.request.user)
 
 @login_required
 def post_like(request, slug):
@@ -189,3 +218,57 @@ def bookmarked_posts(request):
     ).order_by('-created_at')
     
     return render(request, 'blog/bookmarked_posts.html', {'posts': posts})
+
+class PostListView(LoginRequiredMixin, ListView):
+    model = Post
+    template_name = 'blog/post_list.html'
+    context_object_name = 'posts'
+
+    def get_queryset(self):
+        # 빈 slug를 가진 게시물들에 slug 생성
+        posts_without_slug = Post.objects.filter(author=self.request.user, slug='')
+        for post in posts_without_slug:
+            # 한글 제목을 ASCII로 변환하여 slug 생성
+            base_slug = slugify(unidecode(post.title))
+            if not base_slug:
+                # 만약 변환 후 빈 문자열이면 기본값 사용
+                base_slug = 'post'
+            
+            unique_slug = base_slug
+            counter = 1
+            
+            # 고유한 slug 생성
+            while Post.objects.filter(slug=unique_slug).exists():
+                unique_slug = f"{base_slug}-{counter}"
+                counter += 1
+            
+            post.slug = unique_slug
+            post.save(update_fields=['slug'])
+            
+        return Post.objects.filter(author=self.request.user)
+
+class CommentListView(LoginRequiredMixin, ListView):
+    model = Comment
+    template_name = 'blog/comment_list.html'
+    context_object_name = 'comments'
+
+    def get_queryset(self):
+        return Comment.objects.filter(post__author=self.request.user)
+
+class CommentUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    model = Comment
+    fields = ['content']
+    template_name = 'blog/comment_form.html'
+    success_url = reverse_lazy('comment_list')
+
+    def test_func(self):
+        comment = self.get_object()
+        return self.request.user == comment.post.author
+
+class CommentDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
+    model = Comment
+    success_url = reverse_lazy('comment_list')
+
+    def test_func(self):
+        comment = self.get_object()
+        return self.request.user == comment.post.author

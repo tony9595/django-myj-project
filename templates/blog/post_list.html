@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+
+{% block title %}글 관리{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="admin-container">
+        <div class="sidebar">
+            <h3>블로그 관리</h3>
+            <ul>
+                <li><a href="#">대시보드</a></li>
+                <li><a href="{% url 'post_list' %}" class="active">글 관리</a></li>
+                <li><a href="{% url 'category_list' %}">카테고리 관리</a></li>
+                <li><a href="{% url 'comment_list' %}">댓글 관리</a></li>
+                <li><a href="#">설정</a></li>
+            </ul>
+        </div>
+        
+        <div class="content-area">
+            <div class="content-header">
+                <h2>글 관리</h2>
+                <div class="action-buttons">
+                    <a href="{% url 'post_create' %}" class="btn-primary">새 글 작성</a>
+                </div>
+            </div>
+            
+            <div class="post-list admin-list">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 50%;">제목</th>
+                            <th>상태</th>
+                            <th>조회수</th>
+                            <th>작성일</th>
+                            <th>액션</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for post in posts %}
+                            <tr>
+                                <td>
+                                    {% if post.slug %}
+                                    <a href="{% url 'post_detail' slug=post.slug %}">{{ post.title }}</a>
+                                    {% else %}
+                                    {{ post.title }} <small class="text-muted">(슬러그 없음)</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="status {{ post.status }}">
+                                        {% if post.status == 'draft' %}임시저장
+                                        {% elif post.status == 'published' %}공개
+                                        {% elif post.status == 'private' %}비공개
+                                        {% endif %}
+                                    </span>
+                                </td>
+                                <td>{{ post.view_count }}</td>
+                                <td>{{ post.created_at|date:"Y-m-d" }}</td>
+                                <td class="actions">
+                                    {% if post.slug %}
+                                    <a href="{% url 'post_update' slug=post.slug %}" class="btn-edit">수정</a>
+                                    <a href="{% url 'post_delete' slug=post.slug %}" class="btn-delete">삭제</a>
+                                    {% else %}
+                                    <span class="text-muted">슬러그 필요</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="5" class="empty-list">작성된 게시글이 없습니다.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            {% if is_paginated %}
+                <div class="pagination">
+                    {% if page_obj.has_previous %}
+                        <a href="?page=1">&laquo; 처음</a>
+                        <a href="?page={{ page_obj.previous_page_number }}">&lsaquo; 이전</a>
+                    {% endif %}
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <span class="current">{{ num }}</span>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <a href="?page={{ num }}">{{ num }}</a>
+                        {% endif %}
+                    {% endfor %}
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}">다음 &rsaquo;</a>
+                        <a href="?page={{ page_obj.paginator.num_pages }}">마지막 &raquo;</a>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %} 

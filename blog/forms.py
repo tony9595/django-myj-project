@@ -47,9 +47,8 @@ class CommentForm(forms.ModelForm):
         }
 
 class CategoryForm(forms.ModelForm):
+    slug = forms.SlugField(required=False, help_text='입력하지 않으면 이름으로부터 자동 생성됩니다')
+    
     class Meta:
         model = Category
-        fields = ['name', 'slug']
-        widgets = {
-            'slug': forms.TextInput(attrs={'placeholder': '입력하지 않으면 자동 생성됩니다'}),
-        }
+        fields = ['name', 'slug', 'description']

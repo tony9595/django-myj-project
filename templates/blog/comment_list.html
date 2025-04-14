@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+
+{% block title %}댓글 관리{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="admin-container">
+        <div class="sidebar">
+            <h3>블로그 관리</h3>
+            <ul>
+                <li><a href="#">대시보드</a></li>
+                <li><a href="{% url 'post_list' %}">글 관리</a></li>
+                <li><a href="{% url 'category_list' %}">카테고리 관리</a></li>
+                <li><a href="{% url 'comment_list' %}" class="active">댓글 관리</a></li>
+                <li><a href="#">설정</a></li>
+            </ul>
+        </div>
+        
+        <div class="content-area">
+            <div class="content-header">
+                <h2>댓글 관리</h2>
+            </div>
+            
+            <div class="comment-list admin-list">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 20%;">작성자</th>
+                            <th style="width: 40%;">내용</th>
+                            <th>게시글</th>
+                            <th>작성일</th>
+                            <th>액션</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for comment in comments %}
+                            <tr>
+                                <td>{{ comment.author.username }}</td>
+                                <td>{{ comment.content|truncatechars:100 }}</td>
+                                <td>
+                                    <a href="{% url 'post_detail' slug=comment.post.slug %}">{{ comment.post.title|truncatechars:30 }}</a>
+                                </td>
+                                <td>{{ comment.created_at|date:"Y-m-d" }}</td>
+                                <td class="actions">
+                                    <a href="{% url 'comment_update' pk=comment.pk %}" class="btn-edit">수정</a>
+                                    <a href="{% url 'comment_delete' pk=comment.pk %}" class="btn-delete">삭제</a>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="5" class="empty-list">등록된 댓글이 없습니다.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            {% if is_paginated %}
+                <div class="pagination">
+                    {% if page_obj.has_previous %}
+                        <a href="?page=1">&laquo; 처음</a>
+                        <a href="?page={{ page_obj.previous_page_number }}">&lsaquo; 이전</a>
+                    {% endif %}
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <span class="current">{{ num }}</span>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <a href="?page={{ num }}">{{ num }}</a>
+                        {% endif %}
+                    {% endfor %}
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}">다음 &rsaquo;</a>
+                        <a href="?page={{ page_obj.paginator.num_pages }}">마지막 &raquo;</a>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %} 
