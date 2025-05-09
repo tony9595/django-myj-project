@@ -1,85 +1,137 @@
 {% extends 'base.html' %}
-
 {% block title %}
-    {% if object %}게시글 수정{% else %}새 게시글 작성{% endif %}
+    {% if object %}
+        게시글 수정
+    {% else %}
+        새 게시글 작성
+    {% endif %}
 {% endblock %}
-
 {% block extra_head %}
-<style>
-    .form-section {
-        margin-bottom: 20px;
+    <style>
+    .form-label {
+        font-weight: 500;
+        margin-bottom: 8px;
     }
-    .category-list {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
+    .form-control, .form-select {
+        border-radius: 4px;
+        padding: 10px 12px;
+    }
+    .content-editor {
+        min-height: 250px;
+    }
+    .category-options {
+        display: flex;
+        gap: 20px;
+        margin-top: 10px;
+    }
+    .category-item {
+        display: flex;
+        align-items: center;
+    }
+    .category-item input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        margin-right: 8px;
+    }
+    .action-buttons {
+        display: flex;
         gap: 10px;
+        margin-top: 30px;
     }
-</style>
+    .form-section {
+        margin-bottom: 25px;
+    }
+    </style>
 {% endblock %}
-
 {% block content %}
-<div class="container mt-4">
-    <div class="row">
-        <div class="col-md-8 mx-auto">
-            <h2>{% if form.instance.pk %}게시글 수정{% else %}새 게시글 작성{% endif %}</h2>
-            <form method="post" class="mt-4">
-                {% csrf_token %}
-                
-                <div class="mb-3">
-                    <label for="{{ form.title.id_for_label }}" class="form-label">제목</label>
-                    {{ form.title }}
-                    {% if form.title.errors %}
-                    <div class="alert alert-danger">
-                        {{ form.title.errors }}
-                    </div>
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <h2 class="mb-4">
+                    {% if form.instance.pk %}
+                        게시글 수정
+                    {% else %}
+                        게시물 작성
                     {% endif %}
-                </div>
-                
-                <div class="mb-3">
-                    <label for="{{ form.content.id_for_label }}" class="form-label">내용</label>
-                    {{ form.content }}
-                    {% if form.content.errors %}
-                    <div class="alert alert-danger">
-                        {{ form.content.errors }}
+                </h2>
+                <form method="post" class="needs-validation" novalidate>
+                    {% csrf_token %}
+                    <!-- 제목 -->
+                    <div class="form-section">
+                        <label for="{{ form.title.id_for_label }}" class="form-label">제목</label>
+                        <input type="text"
+                               name="{{ form.title.name }}"
+                               id="{{ form.title.id_for_label }}"
+                               class="form-control {% if form.title.errors %}is-invalid{% endif %}"
+                               placeholder="제목을 입력하세요"
+                               value="{{ form.title.value|default:'' }}"
+                               required>
+                        {% if form.title.errors %}<div class="invalid-feedback">{{ form.title.errors }}</div>{% endif %}
                     </div>
-                    {% endif %}
-                </div>
-                
-                <div class="mb-3">
-                    <label for="{{ form.categories.id_for_label }}" class="form-label">카테고리</label>
-                    {{ form.categories }}
-                    {% if form.categories.errors %}
-                    <div class="alert alert-danger">
-                        {{ form.categories.errors }}
+                    <!-- 내용 -->
+                    <div class="form-section">
+                        <label for="{{ form.content.id_for_label }}" class="form-label">내용</label>
+                        <textarea name="{{ form.content.name }}"
+                                  id="{{ form.content.id_for_label }}"
+                                  class="form-control content-editor {% if form.content.errors %}is-invalid{% endif %}"
+                                  rows="10"
+                                  placeholder="내용을 입력하세요"
+                                  required>{{ form.content.value|default:'' }}</textarea>
+                        {% if form.content.errors %}<div class="invalid-feedback">{{ form.content.errors }}</div>{% endif %}
                     </div>
-                    {% endif %}
-                </div>
-                
-                <div class="mb-3">
-                    <label for="{{ form.tags.id_for_label }}" class="form-label">태그</label>
-                    {{ form.tags }}
-                    <small class="form-text text-muted">{{ form.tags.help_text }}</small>
-                    {% if form.tags.errors %}
-                    <div class="alert alert-danger">
-                        {{ form.tags.errors }}
+                    <!-- 카테고리 -->
+                    <div class="form-section">
+                        <label class="form-label">카테고리</label>
+                        <div class="category-options">
+                            {% for checkbox in form.categories %}
+                                <div class="category-item">
+                                    {{ checkbox.tag }}
+                                    <label class="form-check-label" for="{{ checkbox.id_for_label }}">{{ checkbox.choice_label }}</label>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        {% if form.categories.errors %}<div class="text-danger mt-2">{{ form.categories.errors }}</div>{% endif %}
                     </div>
-                    {% endif %}
-                </div>
-                
-                <div class="mb-3">
-                    <label for="{{ form.status.id_for_label }}" class="form-label">상태</label>
-                    {{ form.status }}
-                    {% if form.status.errors %}
-                    <div class="alert alert-danger">
-                        {{ form.status.errors }}
+                    <!-- 상태 -->
+                    <div class="form-section">
+                        <label for="{{ form.status.id_for_label }}" class="form-label">상태</label>
+                        <select name="{{ form.status.name }}"
+                                id="{{ form.status.id_for_label }}"
+                                class="form-select {% if form.status.errors %}is-invalid{% endif %}"
+                                style="width: 100%;
+                                       max-width: 250px">
+                            {% for value, text in form.status.field.choices %}
+                                <option value="{{ value }}"
+                                        {% if form.status.value == value %}selected{% endif %}>{{ text }}</option>
+                            {% endfor %}
+                        </select>
+                        {% if form.status.errors %}<div class="invalid-feedback">{{ form.status.errors }}</div>{% endif %}
                     </div>
-                    {% endif %}
-                </div>
-                
-                <button type="submit" class="btn btn-primary">저장</button>
-                <a href="{% url 'home' %}" class="btn btn-secondary">취소</a>
-            </form>
+                    <!-- 버튼 -->
+                    <div class="action-buttons">
+                        <button type="button"
+                                onclick="location.href='{% url 'home' %}'"
+                                class="btn btn-light px-4 py-2">취소</button>
+                        <button type="submit" class="btn btn-primary px-4 py-2">저장</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
-</div>
+    <script>
+// Bootstrap 유효성 검사 활성화
+(function() {
+    'use strict';
+    var forms = document.querySelectorAll('.needs-validation');
+    Array.prototype.slice.call(forms).forEach(function(form) {
+        form.addEventListener('submit', function(event) {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            form.classList.add('was-validated');
+        }, false);
+    });
+})();
+    </script>
 {% endblock %}

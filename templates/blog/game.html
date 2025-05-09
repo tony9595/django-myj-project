@@ -1,0 +1,157 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}가위바위보 게임{% endblock %}
+{% block extra_head %}
+    <style>
+    .game-container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    .game-title {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+    .choices {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        margin-bottom: 40px;
+    }
+    .choice-btn {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        border: none;
+        background-color: #f8f9fa;
+        transition: all 0.3s;
+        cursor: pointer;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    .choice-btn:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 6px 8px rgba(0,0,0,0.15);
+    }
+    .choice-btn i {
+        font-size: 40px;
+    }
+    .game-result {
+        text-align: center;
+        margin-top: 30px;
+        padding: 20px;
+        border-radius: 10px;
+    }
+    .win {
+        background-color: #d4edda;
+        color: #155724;
+    }
+    .lose {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+    .draw {
+        background-color: #fff3cd;
+        color: #856404;
+    }
+    .choice-display {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 50px;
+        margin-top: 30px;
+    }
+    .player-choice, .computer-choice {
+        text-align: center;
+    }
+    .choice-icon {
+        font-size: 60px;
+        margin-bottom: 10px;
+    }
+    .vs {
+        font-size: 24px;
+        font-weight: bold;
+    }
+    .game-history {
+        margin-top: 40px;
+    }
+    .button-link {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        margin-top: 40px;
+    }
+    </style>
+{% endblock %}
+{% block content %}
+    <div class="container mt-5">
+        <div class="game-container">
+            <div class="game-title">
+                <h1>가위바위보 게임</h1>
+                <p class="text-muted">운을 시험해보세요!</p>
+            </div>
+            <form method="post" class="text-center">
+                {% csrf_token %}
+                <div class="choices">
+                    <button type="submit" name="choice" value="rock" class="choice-btn">
+                        <i class="fas fa-hand-rock">✊</i>
+                    </button>
+                    <button type="submit" name="choice" value="paper" class="choice-btn">
+                        <i class="fas fa-hand-paper">✋</i>
+                    </button>
+                    <button type="submit" name="choice" value="scissors" class="choice-btn">
+                        <i class="fas fa-hand-scissors">✌️</i>
+                    </button>
+                </div>
+            </form>
+            {% if result %}
+                <div class="choice-display">
+                    <div class="player-choice">
+                        <div class="choice-icon">
+                            {% if user_choice == 'rock' %}
+                                ✊
+                            {% elif user_choice == 'paper' %}
+                                ✋
+                            {% elif user_choice == 'scissors' %}
+                                ✌️
+                            {% endif %}
+                        </div>
+                        <p>당신의 선택</p>
+                    </div>
+                    <div class="vs">VS</div>
+                    <div class="computer-choice">
+                        <div class="choice-icon">
+                            {% if computer_choice == 'rock' %}
+                                ✊
+                            {% elif computer_choice == 'paper' %}
+                                ✋
+                            {% elif computer_choice == 'scissors' %}
+                                ✌️
+                            {% endif %}
+                        </div>
+                        <p>컴퓨터의 선택</p>
+                    </div>
+                </div>
+                <div class="game-result {{ result }}">
+                    {% if result == 'win' %}
+                        <h3>축하합니다! 이겼습니다!</h3>
+                    {% elif result == 'lose' %}
+                        <h3>아쉽네요, 컴퓨터가 이겼습니다.</h3>
+                    {% else %}
+                        <h3>무승부입니다!</h3>
+                    {% endif %}
+                </div>
+            {% else %}
+                <div class="text-center mt-4">
+                    <p>위의 버튼 중 하나를 선택하여 게임을 시작하세요.</p>
+                </div>
+            {% endif %}
+            <div class="button-link">
+                <a href="{% url 'home' %}" class="btn btn-secondary">메인페이지로 돌아가기</a>
+                <a href="{% url 'lotto' %}" class="btn btn-primary">로또번호 추첨하기</a>
+            </div>
+        </div>
+    </div>
+{% endblock %}

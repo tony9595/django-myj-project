@@ -1,0 +1,242 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}로또 번호 추첨{% endblock %}
+
+{% block extra_head %}
+<style>
+    .lotto-container {
+        max-width: 700px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    .lotto-title {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+    .lotto-numbers {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin: 30px 0;
+        flex-wrap: wrap;
+    }
+    .number-ball {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 24px;
+        font-weight: bold;
+        color: white;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    .ball-1-10 {
+        background-color: #fbc400;
+    }
+    .ball-11-20 {
+        background-color: #69c8f2;
+    }
+    .ball-21-30 {
+        background-color: #ff7272;
+    }
+    .ball-31-40 {
+        background-color: #aaa;
+    }
+    .ball-41-45 {
+        background-color: #b0d840;
+    }
+    .bonus-container {
+        position: relative;
+        display: flex;
+        align-items: center;
+        margin-left: 10px;
+    }
+    .bonus-container:before {
+        content: '+';
+        font-size: 30px;
+        margin-right: 10px;
+        font-weight: bold;
+        color: #666;
+    }
+    .generate-btn {
+        display: block;
+        width: 200px;
+        height: 50px;
+        margin: 0 auto;
+        background-color: #5C7AEA;
+        color: white;
+        border: none;
+        border-radius: 25px;
+        font-size: 18px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    .generate-btn:hover {
+        background-color: #4a62bb;
+        transform: translateY(-3px);
+        box-shadow: 0 6px 8px rgba(0,0,0,0.15);
+    }
+    .history-section {
+        margin-top: 50px;
+        padding-top: 20px;
+        border-top: 1px solid #eee;
+    }
+    .history-title {
+        text-align: center;
+        margin-bottom: 20px;
+        font-size: 24px;
+        color: #555;
+    }
+    .history-item {
+        background-color: #f9f9f9;
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 15px;
+    }
+    .history-date {
+        font-size: 14px;
+        color: #777;
+        margin-bottom: 10px;
+    }
+    .history-numbers {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+    .history-ball {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 16px;
+        font-weight: bold;
+        color: white;
+    }
+    .no-history {
+        text-align: center;
+        color: #777;
+        font-style: italic;
+    }
+    .button-link {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        margin-top: 40px;
+    }
+    .animate-ball {
+        animation: pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    @keyframes pop {
+        0% {
+            transform: scale(0);
+            opacity: 0;
+        }
+        80% {
+            transform: scale(1.2);
+        }
+        100% {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+    .animated-numbers .number-ball:nth-child(1) { animation-delay: 0.1s; }
+    .animated-numbers .number-ball:nth-child(2) { animation-delay: 0.2s; }
+    .animated-numbers .number-ball:nth-child(3) { animation-delay: 0.3s; }
+    .animated-numbers .number-ball:nth-child(4) { animation-delay: 0.4s; }
+    .animated-numbers .number-ball:nth-child(5) { animation-delay: 0.5s; }
+    .animated-numbers .number-ball:nth-child(6) { animation-delay: 0.6s; }
+    .animated-numbers .bonus-container { animation-delay: 0.8s; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="lotto-container">
+        <div class="lotto-title">
+            <h1>로또 번호 추첨</h1>
+            <p class="text-muted">행운의 번호를 생성해보세요!</p>
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit" class="generate-btn">번호 생성하기</button>
+        </form>
+
+        {% if numbers %}
+        <div class="lotto-numbers animated-numbers">
+            {% for number in numbers %}
+            <div class="number-ball animate-ball 
+                        {% if number <= 10 %}ball-1-10
+                        {% elif number <= 20 %}ball-11-20
+                        {% elif number <= 30 %}ball-21-30
+                        {% elif number <= 40 %}ball-31-40
+                        {% else %}ball-41-45{% endif %}">
+                {{ number }}
+            </div>
+            {% endfor %}
+            
+            <div class="bonus-container">
+                <div class="number-ball animate-ball 
+                            {% if bonus <= 10 %}ball-1-10
+                            {% elif bonus <= 20 %}ball-11-20
+                            {% elif bonus <= 30 %}ball-21-30
+                            {% elif bonus <= 40 %}ball-31-40
+                            {% else %}ball-41-45{% endif %}">
+                    {{ bonus }}
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="text-center mt-5 mb-5">
+            <p>위의 버튼을 클릭하여 로또 번호를 생성하세요.</p>
+        </div>
+        {% endif %}
+
+        {% if history %}
+        <div class="history-section">
+            <h3 class="history-title">최근 생성 기록</h3>
+            
+            {% for item in history %}
+            <div class="history-item">
+                <div class="history-date">{{ item.date }}</div>
+                <div class="history-numbers">
+                    {% for number in item.numbers %}
+                    <div class="history-ball 
+                                {% if number <= 10 %}ball-1-10
+                                {% elif number <= 20 %}ball-11-20
+                                {% elif number <= 30 %}ball-21-30
+                                {% elif number <= 40 %}ball-31-40
+                                {% else %}ball-41-45{% endif %}">
+                        {{ number }}
+                    </div>
+                    {% endfor %}
+                    <div class="bonus-container">
+                        <div class="history-ball 
+                                    {% if item.bonus <= 10 %}ball-1-10
+                                    {% elif item.bonus <= 20 %}ball-11-20
+                                    {% elif item.bonus <= 30 %}ball-21-30
+                                    {% elif item.bonus <= 40 %}ball-31-40
+                                    {% else %}ball-41-45{% endif %}">
+                            {{ item.bonus }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="button-link">
+            <a href="{% url 'home' %}" class="btn btn-secondary">메인페이지로 돌아가기</a>
+            <a href="{% url 'game' %}" class="btn btn-primary ms-2">가위바위보 게임하기</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
